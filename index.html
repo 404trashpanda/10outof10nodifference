@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>10outof10nodifference</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #000; }
+  body { display: flex; align-items: center; justify-content: center; }
+  #momoa { max-width: 100vw; max-height: 100vh; }
+  #start {
+    font: 2rem sans-serif; padding: 1rem 2rem; cursor: pointer;
+    border: none; border-radius: 0.5rem; background: #fff; color: #000;
+  }
+</style>
+</head>
+<body>
+<button id="start">Start</button>
+<img id="momoa" alt="" hidden>
+<script>
+const IMAGES = Array.from({ length: 19 }, (_, i) => `images/${i + 1}.jpg`);
+const SOUNDS = Array.from({ length: 5 }, (_, i) => new Audio(`sounds/${i + 1}.mp3`));
+
+const img = document.getElementById("momoa");
+const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+let upper = 10;
+
+function scheduleNext() {
+  const delay = 1 + Math.random() * (upper - 1);
+  setTimeout(async () => {
+    upper += 10;
+    scheduleNext();
+    img.src = pick(IMAGES);
+    await img.decode();
+    img.hidden = false;
+    const sound = pick(SOUNDS);
+    sound.currentTime = 0;
+    sound.play();
+  }, delay * 1000);
+}
+
+document.getElementById("start").addEventListener("click", e => {
+  e.target.remove();
+  // Mobile browsers only let an audio element play later if it was first played during a user gesture.
+  for (const s of SOUNDS) {
+    s.muted = true;
+    s.play().then(() => { s.pause(); s.muted = false; });
+  }
+  scheduleNext();
+});
+</script>
+</body>
+</html>
