@@ -6,8 +6,40 @@
 <title>10outof10nodifference</title>
 <style>
   html, body { margin: 0; height: 100%; background: #000; }
-  body { display: flex; align-items: center; justify-content: center; }
+  body { display: flex; align-items: center; justify-content: center; overflow: hidden; }
   #momoa { max-width: 100vw; max-height: 100vh; }
+  @keyframes spin {
+    from { transform: scale(0) rotate(-720deg); }
+    to   { transform: none; }
+  }
+  @keyframes boing {
+    0%   { transform: translateY(-100vh); }
+    45%  { transform: translateY(0) scale(1.3, 0.7); }
+    60%  { transform: translateY(-15vh) scale(0.85, 1.15); }
+    75%  { transform: translateY(0) scale(1.15, 0.85); }
+    88%  { transform: translateY(-4vh); }
+    100% { transform: none; }
+  }
+  @keyframes jelly {
+    0%   { transform: scale(0); }
+    30%  { transform: scale(1.25, 0.75); }
+    45%  { transform: scale(0.75, 1.25); }
+    60%  { transform: scale(1.15, 0.85); }
+    75%  { transform: scale(0.95, 1.05); }
+    88%  { transform: scale(1.05, 0.95); }
+    100% { transform: none; }
+  }
+  @keyframes zoom {
+    0%   { transform: scale(6) rotate(30deg); opacity: 0; }
+    70%  { transform: scale(0.9) rotate(-5deg); opacity: 1; }
+    100% { transform: none; }
+  }
+  @keyframes skid {
+    0%   { transform: translateX(-100vw) skewX(30deg); }
+    60%  { transform: translateX(5vw) skewX(-20deg); }
+    80%  { transform: translateX(-2vw) skewX(8deg); }
+    100% { transform: none; }
+  }
   #start {
     font: 2rem sans-serif; padding: 1rem 2rem; margin: 1rem; cursor: pointer;
     border: none; border-radius: 0.5rem; background: #fff; color: #000;
@@ -23,6 +55,7 @@ const SOUNDS = Array.from({ length: 5 }, (_, i) => new Audio(`sounds/${i + 1}.mp
 
 const img = document.getElementById("momoa");
 const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+const ENTRANCES = ["spin", "boing", "jelly", "zoom", "skid"];
 let deck = [];
 let shown;
 
@@ -46,6 +79,9 @@ function scheduleNext(delay) {
     img.src = nextImage();
     await img.decode();
     img.hidden = false;
+    img.style.animation = "none";
+    img.offsetWidth; // force a reflow so the next animation restarts
+    img.style.animation = `${pick(ENTRANCES)} 0.9s ease-out`;
     const sound = pick(SOUNDS);
     sound.currentTime = 0;
     sound.play();
