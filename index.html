@@ -41,11 +41,11 @@ function nextImage() {
   return shown;
 }
 
-let analyser, buf;
+let ctx, analyser, buf;
 // Routes every sound through an analyser so the shake can follow the fart's loudness.
 function setupAudio() {
   if (navigator.audioSession) navigator.audioSession.type = "playback"; // otherwise iOS mutes Web Audio in silent mode
-  const ctx = new AudioContext();
+  ctx = new AudioContext();
   analyser = ctx.createAnalyser();
   analyser.fftSize = 1024;
   buf = new Float32Array(analyser.fftSize);
@@ -72,19 +72,27 @@ function tame(level, t) {
 const wobble = (t, phase) => 0.6 * Math.sin(t * 35 + phase) + 0.4 * Math.sin(t * 53 + phase * 2.3);
 
 // Shakes the picture in step with the fart until it has finished and settled.
-function quake(sound) {
+// Audio takes `latency` seconds to come out of the speakers (Bluetooth: ~0.2 s), so loudness
+// readings are used that much later, and show() is called when the fart starts being heard.
+function quake(sound, latency, show) {
   const phase = Math.random() * 100;
-  let level = 0, t = 0, last = performance.now();
+  const readings = [];
+  let level = 0, t = 0, last = null, lastPlaying = performance.now();
   const frame = now => {
+    readings.push([now, loudness()]);
+    const heard = now - latency * 1000;
+    while (readings.length > 1 && readings[1][0] <= heard) readings.shift();
+    if (readings[0][0] > heard) return requestAnimationFrame(frame);
+    if (last === null) { show(); last = now; }
     const dt = Math.min((now - last) / 1000, 0.05);
     last = now; t += dt;
-    const l = loudness();
+    const l = readings[0][1];
     level = l > level ? level + (l - level) * 0.5 : level * 0.9;
     const k = tame(level, t);
     img.style.transform =
       `translate(${wobble(t, phase) * k * 60}px, ${wobble(t, phase + 1.7) * k * 60}px) rotate(${wobble(t, phase + 3.1) * k * 6}deg)`;
-    const playing = !sound.paused && !sound.ended;
-    if (playing || level >= 0.01) requestAnimationFrame(frame);
+    if (!sound.paused && !sound.ended) lastPlaying = now;
+    if (now - lastPlaying <= latency * 1000 || level >= 0.01) requestAnimationFrame(frame);
     else img.style.transform = "";
   };
   requestAnimationFrame(frame);
@@ -93,13 +101,16 @@ function quake(sound) {
 function scheduleNext(delay) {
   setTimeout(async () => {
     scheduleNext(5 + Math.random() * 5);
-    img.src = nextImage();
-    await img.decode();
-    img.hidden = false;
+    const pic = new Image();
+    pic.src = nextImage();
+    await pic.decode();
     const sound = pick(SOUNDS);
     sound.currentTime = 0;
-    sound.play();
-    quake(sound);
+    await sound.play().catch(() => {}); // resolves once playback has actually started
+    quake(sound, (ctx.outputLatency || 0) + (ctx.baseLatency || 0), () => {
+      img.src = pic.src;
+      img.hidden = false;
+    });
   }, delay * 1000);
 }
 
