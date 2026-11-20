@@ -106,10 +106,11 @@ function scheduleNext(delay) {
 document.getElementById("start").addEventListener("click", e => {
   e.target.remove();
   setupAudio();
-  // Mobile browsers only let an audio element play later if it was first played during a user gesture.
+  // Mobile browsers only let an audio element play later if play() was first called during a user gesture.
+  // Pausing right away means nothing is heard (the interrupted play() rejects, hence the catch).
   for (const s of SOUNDS) {
-    s.muted = true;
-    s.play().then(() => { s.pause(); s.muted = false; });
+    s.play().catch(() => {});
+    s.pause();
   }
   scheduleNext(3);
 });
