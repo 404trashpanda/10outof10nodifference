@@ -98,8 +98,9 @@ function quake(sound, latency, show) {
   requestAnimationFrame(frame);
 }
 
+let timer;
 function scheduleNext(delay) {
-  setTimeout(async () => {
+  timer = setTimeout(async () => {
     scheduleNext(5 + Math.random() * 5);
     const pic = new Image();
     pic.src = nextImage();
