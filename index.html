@@ -17,28 +17,37 @@
 <body>
 <button id="start">Click here for your personalized Raphi substitute</button>
 <img id="momoa" alt="" hidden>
+<script src="weights.js"></script>
 <script>
 const IMAGES = Array.from({ length: 26 }, (_, i) => `images/${i + 1}.jpg`);
 const SOUNDS = Array.from({ length: 18 }, (_, i) => new Audio(`sounds/${i + 1}.mp3`));
 
 const img = document.getElementById("momoa");
 const pick = arr => arr[Math.floor(Math.random() * arr.length)];
-let deck = [];
-let shown;
+// Picks 1..n with chance proportional to exp(score), never one listed in skip.
+function weightedPick(scores, skip) {
+  const weights = scores.map((s, i) => (skip.includes(i + 1) ? 0 : Math.exp(s)));
+  let r = Math.random() * weights.reduce((sum, w) => sum + w, 0);
+  let i = 0;
+  while (i < weights.length - 1 && (r -= weights[i]) >= 0) i++;
+  return i + 1;
+}
 
-function nextImage() {
-  if (deck.length === 0) {
-    deck = IMAGES.slice();
-    for (let i = deck.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [deck[i], deck[j]] = [deck[j], deck[i]];
-    }
-    // Avoid repeating the last image of the previous deck right after a reshuffle.
-    const top = deck.length - 1;
-    if (deck[top] === shown) [deck[0], deck[top]] = [deck[top], deck[0]];
+// Scores come from weights.js (fitted from ratings): better pictures and farts come up more often.
+// Starts with one of the best combos; skips the last 8 pictures and the last fart.
+const recentImages = [];
+let lastSoundNo = null, combos = 0;
+function nextCombo() {
+  let image, sound;
+  if (combos++ === 0) [image, sound] = pick(BEST);
+  else {
+    image = weightedPick(IMAGE_SCORES, recentImages);
+    sound = weightedPick(SOUND_SCORES.map((s, j) => s + PORTRAIT_LONG * PORTRAIT[image - 1] * LONG_SOUND[j]), [lastSoundNo]);
   }
-  shown = deck.pop();
-  return shown;
+  recentImages.push(image);
+  if (recentImages.length > 8) recentImages.shift();
+  lastSoundNo = sound;
+  return { image, sound };
 }
 
 let ctx, analyser, buf;
@@ -102,10 +111,11 @@ let timer;
 function scheduleNext(delay) {
   timer = setTimeout(async () => {
     scheduleNext(5 + Math.random() * 5);
+    const combo = nextCombo();
     const pic = new Image();
-    pic.src = nextImage();
+    pic.src = IMAGES[combo.image - 1];
     await pic.decode();
-    const sound = pick(SOUNDS);
+    const sound = SOUNDS[combo.sound - 1];
     sound.currentTime = 0;
     await sound.play().catch(() => {}); // resolves once playback has actually started
     quake(sound, (ctx.outputLatency || 0) + (ctx.baseLatency || 0), () => {
