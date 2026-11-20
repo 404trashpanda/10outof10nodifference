@@ -90,7 +90,7 @@ function quake(sound, latency, show) {
     level = l > level ? level + (l - level) * 0.5 : level * 0.9;
     const k = tame(level, t);
     img.style.transform =
-      `translate(${wobble(t, phase) * k * 60}px, ${wobble(t, phase + 1.7) * k * 60}px) rotate(${wobble(t, phase + 3.1) * k * 6}deg)`;
+      `translate(${wobble(t, phase) * k * 30}px, ${wobble(t, phase + 1.7) * k * 30}px) rotate(${wobble(t, phase + 3.1) * k * 3}deg)`;
     if (!sound.paused && !sound.ended) lastPlaying = now;
     if (now - lastPlaying <= latency * 1000 || level >= 0.01) requestAnimationFrame(frame);
     else img.style.transform = "";
