@@ -23,13 +23,9 @@ const SOUNDS = Array.from({ length: 5 }, (_, i) => new Audio(`sounds/${i + 1}.mp
 
 const img = document.getElementById("momoa");
 const pick = arr => arr[Math.floor(Math.random() * arr.length)];
-let upper = 10;
-
-function scheduleNext() {
-  const delay = 1 + Math.random() * (upper - 1);
+function scheduleNext(delay) {
   setTimeout(async () => {
-    upper += 10;
-    scheduleNext();
+    scheduleNext(5 + Math.random() * 5);
     img.src = pick(IMAGES);
     await img.decode();
     img.hidden = false;
@@ -46,7 +42,7 @@ document.getElementById("start").addEventListener("click", e => {
     s.muted = true;
     s.play().then(() => { s.pause(); s.muted = false; });
   }
-  scheduleNext();
+  scheduleNext(3);
 });
 </script>
 </body>
