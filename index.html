@@ -23,10 +23,27 @@ const SOUNDS = Array.from({ length: 5 }, (_, i) => new Audio(`sounds/${i + 1}.mp
 
 const img = document.getElementById("momoa");
 const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+let deck = [];
+let shown;
+
+function nextImage() {
+  if (deck.length === 0) {
+    deck = IMAGES.slice();
+    for (let i = deck.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [deck[i], deck[j]] = [deck[j], deck[i]];
+    }
+    // Avoid repeating the last image of the previous deck right after a reshuffle.
+    const top = deck.length - 1;
+    if (deck[top] === shown) [deck[0], deck[top]] = [deck[top], deck[0]];
+  }
+  shown = deck.pop();
+  return shown;
+}
 function scheduleNext(delay) {
   setTimeout(async () => {
     scheduleNext(5 + Math.random() * 5);
-    img.src = pick(IMAGES);
+    img.src = nextImage();
     await img.decode();
     img.hidden = false;
     const sound = pick(SOUNDS);
