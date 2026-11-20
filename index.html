@@ -19,7 +19,7 @@
 <img id="momoa" alt="" hidden>
 <script>
 const IMAGES = Array.from({ length: 26 }, (_, i) => `images/${i + 1}.jpg`);
-const SOUNDS = Array.from({ length: 22 }, (_, i) => new Audio(`sounds/${i + 1}.mp3`));
+const SOUNDS = Array.from({ length: 18 }, (_, i) => new Audio(`sounds/${i + 1}.mp3`));
 
 const img = document.getElementById("momoa");
 const pick = arr => arr[Math.floor(Math.random() * arr.length)];
@@ -53,7 +53,7 @@ function setupAudio() {
   for (const s of SOUNDS) ctx.createMediaElementSource(s).connect(analyser);
 }
 
-// 0..1, where 1 is an RMS of 0.25 (about the 90th percentile of these farts).
+// 0..1, where 1 is an RMS of 0.25 (very loud; none of the current farts get there).
 function loudness() {
   analyser.getFloatTimeDomainData(buf);
   let sum = 0;
