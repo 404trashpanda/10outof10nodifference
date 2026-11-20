@@ -24,16 +24,13 @@ const SOUNDS = Array.from({ length: 18 }, (_, i) => new Audio(`sounds/${i + 1}.m
 
 const img = document.getElementById("momoa");
 const pick = arr => arr[Math.floor(Math.random() * arr.length)];
-// Picks 1..n with chance proportional to exp(score), never one listed in skip.
-function weightedPick(scores, skip) {
-  const weights = scores.map((s, i) => (skip.includes(i + 1) ? 0 : Math.exp(s)));
-  let r = Math.random() * weights.reduce((sum, w) => sum + w, 0);
-  let i = 0;
-  while (i < weights.length - 1 && (r -= weights[i]) >= 0) i++;
-  return i + 1;
+// Chance that a picture+fart combo is "good", from the scores in weights.js (fitted from ratings).
+// Picking by it keeps clear losers rare while near-equal combos come up about equally often.
+function goodness(image, sound) {
+  const score = IMAGE_SCORES[image - 1] + SOUND_SCORES[sound - 1] + PORTRAIT_LONG * PORTRAIT[image - 1] * LONG_SOUND[sound - 1];
+  return 1 / (1 + Math.exp(-(GOOD_CUT + score)));
 }
 
-// Scores come from weights.js (fitted from ratings): better pictures and farts come up more often.
 // Starts with one of the best combos; skips the last 8 pictures and the last fart.
 const recentImages = [];
 let lastSoundNo = null, combos = 0;
@@ -41,8 +38,12 @@ function nextCombo() {
   let image, sound;
   if (combos++ === 0) [image, sound] = pick(BEST);
   else {
-    image = weightedPick(IMAGE_SCORES, recentImages);
-    sound = weightedPick(SOUND_SCORES.map((s, j) => s + PORTRAIT_LONG * PORTRAIT[image - 1] * LONG_SOUND[j]), [lastSoundNo]);
+    const options = [];
+    for (let i = 1; i <= IMAGES.length; i++)
+      for (let j = 1; j <= SOUNDS.length; j++)
+        if (!recentImages.includes(i) && j !== lastSoundNo) options.push([i, j, goodness(i, j)]);
+    let r = Math.random() * options.reduce((sum, o) => sum + o[2], 0);
+    [image, sound] = options.find(o => (r -= o[2]) < 0) || options[options.length - 1];
   }
   recentImages.push(image);
   if (recentImages.length > 8) recentImages.shift();
