@@ -111,7 +111,7 @@ function quake(sound, latency, show) {
 let timer;
 function scheduleNext(delay) {
   timer = setTimeout(async () => {
-    scheduleNext(5 + Math.random() * 5);
+    scheduleNext(5 + Math.random() * 3);
     const combo = nextCombo();
     const pic = new Image();
     pic.src = IMAGES[combo.image - 1];
