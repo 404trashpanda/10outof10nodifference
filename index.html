@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>10outof10nodifference</title>
+<script defer src="https://cloud.umami.is/script.js" data-website-id="7475de55-2865-4af0-bd94-b24b4f19e4ad" data-domains="404trashpanda.github.io"></script>
 <style>
   html, body { margin: 0; height: 100%; background: #000; }
   body { display: flex; align-items: center; justify-content: center; overflow: hidden; }
@@ -48,7 +49,7 @@ function nextCombo() {
   recentImages.push(image);
   if (recentImages.length > 8) recentImages.shift();
   lastSoundNo = sound;
-  return { image, sound };
+  return { image, sound, n: combos };
 }
 
 let ctx, analyser, buf;
@@ -122,12 +123,14 @@ function scheduleNext(delay) {
     quake(sound, (ctx.outputLatency || 0) + (ctx.baseLatency || 0), () => {
       img.src = pic.src;
       img.hidden = false;
+      window.umami?.track("combo", combo); // umami is undefined when an ad blocker stops the script
     });
   }, delay * 1000);
 }
 
 document.getElementById("start").addEventListener("click", e => {
   e.target.remove();
+  window.umami?.track("start");
   setupAudio();
   // Mobile browsers only let an audio element play later if play() was first called during a user gesture.
   // Pausing right away means nothing is heard (the interrupted play() rejects, hence the catch).
